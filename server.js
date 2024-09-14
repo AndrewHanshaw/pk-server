@@ -4,16 +4,22 @@ const forge = require('node-forge');
 const fs = require('fs');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
+const minimist = require('minimist');
 const upload = multer({dest: 'uploads/'});
 const app = express();
 
+// Parse command-line arguments
+const argv = minimist(process.argv.slice(2));
+const verbose =
+    argv.verbose || false;  // Enable verbose logging if --verbose is provided
+
 app.post('/sign', upload.single('pkpass'), (req, res) => {
-  console.log('Received a request to /sign');
+  if (verbose) console.log('Received a request to /sign');
   const passPath = req.file.path;
-  console.log(`Uploaded file path: ${passPath}`);
+  if (verbose) console.log(`Uploaded file path: ${passPath}`);
 
   const zip = new AdmZip(passPath);
-  console.log('Extracting contents from the zip file');
+  if (verbose) console.log('Extracting contents from the zip file');
 
   const files = zip.getEntries().map(entry => entry.entryName);
   const manifest = {};
@@ -28,7 +34,7 @@ app.post('/sign', upload.single('pkpass'), (req, res) => {
 
   // Convert manifest to JSON string
   const manifestJson = JSON.stringify(manifest, null, 2);
-  console.log('Generated manifest.json');
+  if (verbose) console.log('Generated manifest.json');
 
   try {
     // Load private key and certificate
@@ -42,7 +48,7 @@ app.post('/sign', upload.single('pkpass'), (req, res) => {
     const certificate = forge.pki.certificateFromPem(certificatePem);
     const wwdrCert = forge.pki.certificateFromPem(wwdrCertPem);
 
-    console.log('Signing the manifest');
+    if (verbose) console.log('Signing the manifest');
     // Sign manifest
     const p7 = forge.pkcs7.createSignedData();
     p7.content = forge.util.createBuffer(manifestJson, 'utf8');
@@ -58,7 +64,7 @@ app.post('/sign', upload.single('pkpass'), (req, res) => {
 
     // Create DER signature
     const signature = forge.asn1.toDer(p7.toAsn1()).getBytes();
-    console.log('Signature created successfully');
+    if (verbose) console.log('Signature created successfully');
 
     // Add signature to the zip
     zip.addFile('manifest.json', Buffer.from(manifestJson, 'utf8'));
@@ -67,13 +73,13 @@ app.post('/sign', upload.single('pkpass'), (req, res) => {
     // Save the signed .pkpass
     const signedPass = `signed_${req.file.originalname}`;
     zip.writeZip(signedPass);
-    console.log(`Signed .pkpass saved as ${signedPass}`);
+    if (verbose) console.log(`Signed .pkpass saved as ${signedPass}`);
 
     // Send back the signed pass
     res.download(signedPass, () => {
       fs.unlinkSync(passPath);
       fs.unlinkSync(signedPass);  // Clean up
-      console.log('Temporary files cleaned up');
+      if (verbose) console.log('Temporary files cleaned up');
     });
   } catch (error) {
     console.error('Error during signing process:', error);
@@ -82,5 +88,5 @@ app.post('/sign', upload.single('pkpass'), (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log('Server is running on port 3000');
+  if (verbose) console.log('Server is running on port 3000');
 });
