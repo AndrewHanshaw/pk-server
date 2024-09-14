@@ -1,0 +1,18 @@
+# Node.js dependencies and uploads
+node_modules/
+uploads/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# SSL keys and certificates
+*.pem
+*.p12
