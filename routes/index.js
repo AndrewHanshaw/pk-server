@@ -6,14 +6,11 @@ const crypto = require('crypto');
 const AdmZip = require('adm-zip');
 const minimist = require('minimist');
 const upload = multer({dest: 'uploads/'});
-const app = express();
+var router = express.Router();
 
-// Parse command-line arguments
-const argv = minimist(process.argv.slice(2));
-const verbose =
-    argv.verbose || false;  // Enable verbose logging if --verbose is provided
+const verbose = true;
 
-app.post('/sign', upload.single('pkpass'), (req, res) => {
+router.post('/sign', upload.single('pkpass'), (req, res) => {
   if (verbose) console.log('Received a request to /sign');
   const passPath = req.file.path;
   if (verbose) console.log(`Uploaded file path: ${passPath}`);
@@ -49,7 +46,6 @@ app.post('/sign', upload.single('pkpass'), (req, res) => {
     const wwdrCert = forge.pki.certificateFromPem(wwdrCertPem);
 
     if (verbose) console.log('Signing the manifest');
-    // Sign manifest
     const p7 = forge.pkcs7.createSignedData();
     p7.content = forge.util.createBuffer(manifestJson, 'utf8');
     p7.addCertificate(certificate);
@@ -87,6 +83,9 @@ app.post('/sign', upload.single('pkpass'), (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  if (verbose) console.log('Server is running on port 3000');
+/* GET home page. */
+router.get('/', function(req, res, next) {
+  res.render('index', {title: 'Express'});
 });
+
+module.exports = router;
