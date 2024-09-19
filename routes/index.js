@@ -56,7 +56,7 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
       digestAlgorithm: forge.pki.oids.sha1,
     });
 
-    p7.sign();
+    p7.sign({detached: true});
 
     // Create DER signature
     const signature = forge.asn1.toDer(p7.toAsn1()).getBytes();
