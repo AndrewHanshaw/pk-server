@@ -16,3 +16,6 @@ Thumbs.db
 # SSL keys and certificates
 *.pem
 *.p12
+
+# allow the Apple WWDRCA cert. Available at https://developer.apple.com/certificationauthority/AppleWWDRCA.cer
+!AppleWWDRCA.pem
