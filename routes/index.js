@@ -35,21 +35,17 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
 
   try {
     // Load private key and certificate
-    const wwdrCertPem = fs.readFileSync('AppleWWDRCA.pem', 'utf8');
-
     const privateKeyPem = process.env.PK_key;
     const certificatePem = process.env.PK_cert;
 
     // Convert PEM to Forge objects
     const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
     const certificate = forge.pki.certificateFromPem(certificatePem);
-    const wwdrCert = forge.pki.certificateFromPem(wwdrCertPem);
 
     if (verbose) console.log('Signing the manifest');
     const p7 = forge.pkcs7.createSignedData();
     p7.content = forge.util.createBuffer(manifestJson, 'utf8');
     p7.addCertificate(certificate);
-    p7.addCertificate(wwdrCert);
     p7.addSigner({
       key: privateKey,
       certificate: certificate,
