@@ -45,7 +45,6 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
     if (verbose) console.log('Signing the manifest');
     const p7 = forge.pkcs7.createSignedData();
     p7.content = forge.util.createBuffer(manifestJson, 'utf8');
-    p7.addCertificate(certificate);
     p7.addSigner({
       key: privateKey,
       certificate: certificate,
