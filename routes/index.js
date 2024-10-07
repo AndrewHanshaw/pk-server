@@ -11,12 +11,12 @@ var router = express.Router();
 const verbose = true;
 
 router.post('/sign', upload.single('pkpass'), (req, res) => {
-  if (verbose) context.log('Received a request to /sign');
+  if (verbose) console.log('Received a request to /sign');
   const passPath = req.file.path;
-  if (verbose) context.log(`Uploaded file path: ${passPath}`);
+  if (verbose) console.log(`Uploaded file path: ${passPath}`);
 
   const zip = new AdmZip(passPath);
-  if (verbose) context.log('Extracting contents from the zip file');
+  if (verbose) console.log('Extracting contents from the zip file');
 
   const files = zip.getEntries().map(entry => entry.entryName);
   const manifest = {};
@@ -31,7 +31,7 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
 
   // Convert manifest to JSON string
   const manifestJson = JSON.stringify(manifest, null, 2);
-  if (verbose) context.log('Generated manifest.json');
+  if (verbose) console.log('Generated manifest.json');
 
   try {
     // Load private key and certificate
@@ -42,7 +42,7 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
     const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
     const certificate = forge.pki.certificateFromPem(certificatePem);
 
-    if (verbose) context.log('Signing the manifest');
+    if (verbose) console.log('Signing the manifest');
     const p7 = forge.pkcs7.createSignedData();
     p7.content = forge.util.createBuffer(manifestJson, 'utf8');
     p7.addSigner({
@@ -60,7 +60,7 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
 
     // Create DER signature
     const signature = forge.asn1.toDer(p7.toAsn1()).getBytes();
-    if (verbose) context.log('Signature created successfully');
+    if (verbose) console.log('Signature created successfully');
 
     // Add signature to the zip
     zip.addFile('manifest.json', Buffer.from(manifestJson, 'utf8'));
@@ -69,13 +69,13 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
     // Save the signed .pkpass
     const signedPass = `signed_${req.file.originalname}`;
     zip.writeZip(signedPass);
-    if (verbose) context.log(`Signed .pkpass saved as ${signedPass}`);
+    if (verbose) console.log(`Signed .pkpass saved as ${signedPass}`);
 
     // Send back the signed pass
     res.download(signedPass, () => {
       fs.unlinkSync(passPath);
       fs.unlinkSync(signedPass);  // Clean up
-      if (verbose) context.log('Temporary files cleaned up');
+      if (verbose) console.log('Temporary files cleaned up');
     });
   } catch (error) {
     console.error('Error during signing process:', error);
