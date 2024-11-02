@@ -59,6 +59,7 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
       ]
     });
 
+    p7.addCertificate(certificatePem);
     p7.addCertificate(wwdrCert);
 
     p7.sign({detached: true});
