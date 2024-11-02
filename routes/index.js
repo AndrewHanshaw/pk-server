@@ -30,7 +30,8 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
   });
 
   // Convert manifest to JSON string
-  const manifestJson = JSON.stringify(manifest, null, 2);
+  const manifestJson = JSON.stringify(manifest, null, 2)
+                           .replace(/":/g, '" :');  // Add space before each key
   if (verbose) console.log('Generated manifest.json');
 
   try {
