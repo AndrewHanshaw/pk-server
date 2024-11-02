@@ -38,10 +38,12 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
     // Load private key and certificate
     const privateKeyPem = process.env.PK_key;
     const certificatePem = process.env.PK_cert;
+    const wwdrPem = process.env.WWDR_cert;
 
     // Convert PEM to Forge objects
     const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
     const certificate = forge.pki.certificateFromPem(certificatePem);
+    const wwdrCert = forge.pki.certificateFromPem(wwdrPem);
 
     if (verbose) console.log('Signing the manifest');
     const p7 = forge.pkcs7.createSignedData();
@@ -56,6 +58,8 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
         {type: forge.pki.oids.signingTime, value: new Date()}
       ]
     });
+
+    p7.addCertificate(wwdrCert);
 
     p7.sign({detached: true});
 
