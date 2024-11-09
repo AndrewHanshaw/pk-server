@@ -11,6 +11,16 @@ const upload = multer({
 });
 var router = express.Router();
 
+// Create a write stream to the desired file
+const logFile = fs.createWriteStream('output.log', {flags: 'a'});
+const logStdout = process.stdout;
+
+// Override console.log to write to both the file and stdout
+console.log = function(message) {
+  logFile.write(`${new Date().toISOString()} - ${message}\n`);
+  logStdout.write(`${message}\n`);
+};
+
 const verbose = true;
 
 router.post('/sign', upload.single('pkpass'), (req, res) => {
