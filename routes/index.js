@@ -5,7 +5,10 @@ const fs = require('fs');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
 const minimist = require('minimist');
-const upload = multer({dest: 'uploads/'});
+const upload = multer({
+  dest: 'uploads/',
+  limits: {fileSize: 10 * 1024 * 1024}  // 10MB limit
+});
 var router = express.Router();
 
 const verbose = true;
