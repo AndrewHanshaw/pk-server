@@ -6,8 +6,3 @@ Generic:
 ```
 curl -F "pkpass=@path/to/pass.pkpass" https://[url]/sign --output path/to/output.pkpass
 ```
-
-Azure-specific:
-```
-curl -F "pkpass=@path/to/pass.pkpass" https://pk-server.azurewebsites.net/sign --output path/to/output.pkpass
-```
