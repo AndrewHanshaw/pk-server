@@ -6,3 +6,26 @@ Generic:
 ```
 curl -F "pkpass=@path/to/pass.pkpass" https://[url]/sign --output path/to/output.pkpass
 ```
+
+
+# Environment Variables
+
+A few environment variables are needed to sign passes. They are as follows:
+
+* `PK_key` is the **unencrypted** private key from the CSR that is generated locally using Keychain Access (following these instructions: https://developer.apple.com/help/account/certificates/create-a-certificate-signing-request). You can export this as a `.p12` using Keychain Access (you can skip the export password by just not entering one), and then convert it to a `.pem` using the following:
+
+```
+openssl pkcs12 -in private-key.p12 -nocerts -out pass-key.pem -nodes
+```
+
+* `PK_cert` is the "Pass Type ID" cert that you generate from the CSR found on the Apple Developer website (https://developer.apple.com/account/resources/certificates/list). It is nice to have the bag attributes added to this cert, which can be done with the following:
+
+```
+openssl x509 -in pass.cer -inform der -out pass-cert.pem # convert the .cer downloaded from the Apple Developer website to .pem
+openssl pkcs12 -export -inkey pass-key.pem -in pass-cert.pem -out pass.p12 # Combine cert and private key into a .p12
+openssl pkcs12 -in pass.p12 -nokeys -out pass-cert-with-bag.pem # Convert from .p12 into .pem with Bag Attributes 
+```
+
+Where `pass-key.pem` comes from the private key generated with your CSR as described above
+
+* `WWDR_cert` is the WWDR intermediary cert, available from http://www.apple.com/certificateauthority/
