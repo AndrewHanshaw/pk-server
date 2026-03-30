@@ -4,7 +4,6 @@ const forge = require('node-forge');
 const fs = require('fs');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
-const minimist = require('minimist');
 const upload = multer({
   dest: 'uploads/',
   limits: {fileSize: 20 * 1024 * 1024}  // 20MB limit
@@ -100,11 +99,6 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
     console.error('Error during signing process:', error);
     res.status(500).send('Internal Server Error');
   }
-});
-
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', {title: 'Express'});
 });
 
 module.exports = router;
