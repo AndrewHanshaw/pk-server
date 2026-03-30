@@ -5,13 +5,13 @@ const fs = require('fs');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
 const upload = multer({
-  dest: 'uploads/',
+  dest: '/tmp',
   limits: {fileSize: 20 * 1024 * 1024}  // 20MB limit
 });
 var router = express.Router();
 
 // Create a write stream to the desired file
-const logFile = fs.createWriteStream('output.log', {flags: 'a'});
+const logFile = fs.createWriteStream('/tmp/output.log', {flags: 'a'});
 const logStdout = process.stdout;
 
 // Override console.log to write to both the file and stdout
@@ -85,7 +85,7 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
     zip.addFile('signature', Buffer.from(signature, 'binary'));
 
     // Save the signed .pkpass
-    const signedPass = `signed_${req.file.originalname}`;
+    const signedPass = `/tmp/signed_${req.file.originalname}`;
     zip.writeZip(signedPass);
     if (verbose) console.log(`Signed .pkpass saved as ${signedPass}`);
 
