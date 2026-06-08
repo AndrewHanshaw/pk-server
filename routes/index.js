@@ -22,6 +22,15 @@ console.log = function(message) {
 
 const verbose = true;
 
+function resolveCerts(passTypeIdentifier) {
+  const suffix = passTypeIdentifier.split('.').pop();
+  const isNumberedVariant = /^\d+$/.test(suffix);
+  const certKey = isNumberedVariant ? `PK_cert_${suffix}` : 'PK_cert';
+  const pkKey = 'PK_key';
+  if (verbose) console.log(`resolveCerts: key=${pkKey}, cert=${certKey} for ${passTypeIdentifier}`);
+  return { privateKeyPem: process.env[pkKey] || null, certificatePem: process.env[certKey] || null };
+}
+
 router.post('/sign', upload.single('pkpass'), (req, res) => {
   if (verbose) console.log('Received a request to /sign');
   const passPath = req.file.path;
@@ -30,7 +39,29 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
   const zip = new AdmZip(passPath);
   if (verbose) console.log('Extracting contents from the zip file');
 
-  const files = zip.getEntries().map(entry => entry.entryName);
+  const entries = zip.getEntries();
+  const files = entries.map(entry => entry.entryName);
+
+  // Extract passTypeIdentifier from pass.json
+  const passJsonEntry = zip.getEntry('pass.json');
+  if (!passJsonEntry) {
+    fs.unlinkSync(passPath);
+    return res.status(400).send('Invalid .pkpass: missing pass.json');
+  }
+  let passTypeIdentifier;
+  try {
+    const passJson = JSON.parse(passJsonEntry.getData().toString('utf8'));
+    passTypeIdentifier = passJson.passTypeIdentifier;
+  } catch (e) {
+    fs.unlinkSync(passPath);
+    return res.status(400).send('Invalid .pkpass: could not parse pass.json');
+  }
+  if (!passTypeIdentifier) {
+    fs.unlinkSync(passPath);
+    return res.status(400).send('Invalid .pkpass: pass.json is missing passTypeIdentifier');
+  }
+  if (verbose) console.log(`passTypeIdentifier: ${passTypeIdentifier}`);
+
   const manifest = {};
 
   files.forEach(file => {
@@ -48,8 +79,11 @@ router.post('/sign', upload.single('pkpass'), (req, res) => {
 
   try {
     // Load private key and certificate
-    const privateKeyPem = process.env.PK_key;
-    const certificatePem = process.env.PK_cert;
+    const { privateKeyPem, certificatePem } = resolveCerts(passTypeIdentifier);
+    if (!privateKeyPem || !certificatePem) {
+      fs.unlinkSync(passPath);
+      return res.status(400).send(`No signing certificate configured for passTypeIdentifier: ${passTypeIdentifier}`);
+    }
     const wwdrPem = process.env.WWDR_cert;
 
     // Convert PEM to Forge objects
