@@ -7,7 +7,7 @@
     "start:verbose": "node ./bin/www --verbose"
   },
   "dependencies": {
-    "adm-zip": "^0.5.16",
+    "adm-zip": "^0.6.0",
     "dotenv": "^17.2.3",
     "express": "^4.22.2",
     "morgan": "^1.10.1",
