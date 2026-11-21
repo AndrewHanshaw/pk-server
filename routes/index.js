@@ -35,6 +35,9 @@ function resolveCerts(passTypeIdentifier) {
 // Rate limiters run before multer, so a request over the limit is rejected with 429 before the server receives and parses the upload.
 router.post('/sign', signBurstLimiter, signHourlyLimiter, upload.single('pkpass'), (req, res) => {
   if (verbose) console.log('Received a request to /sign');
+  if (!req.file) {
+    return res.status(400).send('Missing "pkpass" file upload');
+  }
   const passPath = req.file.path;
   if (verbose) console.log(`Uploaded file path: ${passPath}`);
 
