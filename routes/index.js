@@ -4,6 +4,7 @@ const forge = require('node-forge');
 const fs = require('fs');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
+const { signBurstLimiter, signHourlyLimiter } = require('../middleware/rateLimit');
 const upload = multer({
   dest: '/tmp',
   limits: {fileSize: 20 * 1024 * 1024}  // 20MB limit
@@ -31,7 +32,8 @@ function resolveCerts(passTypeIdentifier) {
   return { privateKeyPem: process.env[pkKey] || null, certificatePem: process.env[certKey] || null };
 }
 
-router.post('/sign', upload.single('pkpass'), (req, res) => {
+// Rate limiters run before multer, so a request over the limit is rejected with 429 before the server receives and parses the upload.
+router.post('/sign', signBurstLimiter, signHourlyLimiter, upload.single('pkpass'), (req, res) => {
   if (verbose) console.log('Received a request to /sign');
   const passPath = req.file.path;
   if (verbose) console.log(`Uploaded file path: ${passPath}`);
