@@ -41,11 +41,16 @@ router.post('/sign', signBurstLimiter, signHourlyLimiter, upload.single('pkpass'
   const passPath = req.file.path;
   if (verbose) console.log(`Uploaded file path: ${passPath}`);
 
-  const zip = new AdmZip(passPath);
-  if (verbose) console.log('Extracting contents from the zip file');
-
-  const entries = zip.getEntries();
-  const files = entries.map(entry => entry.entryName);
+  let zip;
+  let files;
+  try {
+    zip = new AdmZip(passPath);
+    if (verbose) console.log('Extracting contents from the zip file');
+    files = zip.getEntries().map(entry => entry.entryName);
+  } catch (e) {
+    fs.unlinkSync(passPath);
+    return res.status(400).send('Invalid .pkpass: not a valid zip archive');
+  }
 
   // Extract passTypeIdentifier from pass.json
   const passJsonEntry = zip.getEntry('pass.json');
