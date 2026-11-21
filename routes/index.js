@@ -3,6 +3,7 @@ const multer = require('multer');
 const forge = require('node-forge');
 const fs = require('fs');
 const crypto = require('crypto');
+const path = require('path');
 const AdmZip = require('adm-zip');
 const { signBurstLimiter, signHourlyLimiter } = require('../middleware/rateLimit');
 const upload = multer({
@@ -129,12 +130,14 @@ router.post('/sign', signBurstLimiter, signHourlyLimiter, upload.single('pkpass'
     zip.addFile('signature', Buffer.from(signature, 'binary'));
 
     // Save the signed .pkpass
-    const signedPass = `/tmp/signed_${req.file.originalname}`;
+    // Use a server-generated path (the client-supplied name is never used in a filesystem path)
+    const signedPass = path.join('/tmp', `signed_${crypto.randomUUID()}.pkpass`);
     zip.writeZip(signedPass);
     if (verbose) console.log(`Signed .pkpass saved as ${signedPass}`);
 
-    // Send back the signed pass
-    res.download(signedPass, () => {
+    // Send back the signed pass, keeping the original (sanitized) filename for the download
+    const downloadName = `signed_${path.basename(req.file.originalname)}`;
+    res.download(signedPass, downloadName, () => {
       fs.unlinkSync(passPath);
       fs.unlinkSync(signedPass);  // Clean up
       if (verbose) console.log('Temporary files cleaned up');
